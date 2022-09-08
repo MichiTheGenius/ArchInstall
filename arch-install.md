@@ -33,11 +33,11 @@ timedatectl set-ntp true
 >
 > For UEFI boot choose the `gpt` disk label. For legacy boot use the `dos` disk label.
 >
-> make a boot partition with a size of 500M and set the bootable flag
+> make a `primary` boot partition with a size of 500M and set the `bootable` flag by hitting 'b' on your keyboard
 >
 > (optional) make a swap partition with the size of 2GB
 >
-> make a root partition with the rest of the size
+> make a `primary` root partition with the remaining size
 
 ---
 
@@ -45,14 +45,12 @@ timedatectl set-ntp true
 
 ### The **boot** partition
 
-> for **UEFI**
->   
+#### for **UEFI**   
 ```shell
 mkfs.fat -F32 /dev/name_of_boot_partition
 ```
 
-> for **legacy**
->
+#### for **legacy**
 ```shell
 mkfs.ext4 /dev/name_of_boot_partition
 ```
@@ -72,7 +70,20 @@ mkfs.ext4 /dev/name_of_root_partition
 ## Mounting the partitions
 ```shell
 mount /dev/name_of_root_partition /mnt
-(optional) swapon /dev/NAMEOFSWAPPARTITION
+(optional) swapon /dev/name_of_swap_partition
+```
+### The **boot** partition
+
+#### for **UEFI**
+```shell
+mkdir -p /mnt/boot/EFI
+mount /dev/name_of_boot_partition /mnt/boot/EFI
+```
+
+#### for **legacy**
+```shell
+mkdir /mnt/boot
+mount /dev/name_of_boot_partition /mnt/boot
 ```
 ---
 
@@ -84,7 +95,7 @@ pacstrap /mnt base base-devel linux linux-firmware vim iwd
 ---
 
 ## Generating the filesystem table
-> this is so that Arch knows where to mount the the partitions on every boot
+this is so that Arch knows where to mount the the partitions on every boot
 ```shell
 genfstab -U /mnt >> /mnt/etc/fstab
 ```
@@ -113,18 +124,6 @@ vim /etc/locale.gen
 
 ```shell
 locale-gen
-```
-
----
-
-## set keyboard layout
-```shell
-localectl set-keymap LAYOUT
-```
-> after installing a desktop environment and X11 run this command to change the graphical keymap
-
-```shell
-localectl set-x11-keymap LAYOUT
 ```
 
 ---
@@ -158,22 +157,15 @@ EDITOR=vim visudo
 ---
 
 ## Install the bootloader
-> for UEFI
->
-
+###  for UEFI
 ```shell
 pacman -S efibootmgr dosfstools os-prober mtools grub
-mkdir /boot/EFI
-mount /dev/NAMEOFBOOTPARTITION /boot/EFI
 grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
-> for legacy
->
-
+### for legacy
 ```shell
-mount /dev/NAMEOFBOOTPARTITION /boot
 grub-install /dev/NAMEOFDRIVE (NOT A PARTITION!)
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
@@ -192,4 +184,25 @@ systemctl enable NetworkManager
 >
 > unmount everything with `umount -R /mnt`
 >
-> reboot the system with `reboot` and enjoy!
+> reboot the system with `reboot` and follow the post-reboot steps!
+
+## Post-reboot
+
+### set keyboard layout
+```shell
+localectl set-keymap LAYOUT
+```
+> after installing a desktop environment and X11 run this command to change the graphical keymap
+
+```shell
+localectl set-x11-keymap LAYOUT
+```
+
+### Install htop and neofetch
+> these programs are absolutely essential to tell the world that you managed to install Arch Linux
+```shell
+sudo pacman -S htop neofetch
+neofetch
+htop
+```
+
